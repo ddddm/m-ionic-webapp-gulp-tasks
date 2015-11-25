@@ -29,7 +29,8 @@ gulp.task('watch', ['inject-all'], function () {
 
   var watchFiles = paths.jsFiles
     .concat([
-      'app/index.html',
+      'app/' + gulp.paths.mobileIndexFile,
+      'app/' + gulp.paths.webappIndexFile,
       '.tmp/*/styles/*.css', // each module's css
       'app/*/assets/**/*'
     ])

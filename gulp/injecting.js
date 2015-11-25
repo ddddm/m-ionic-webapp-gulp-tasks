@@ -34,23 +34,36 @@ gulp.task('inject-all', ['styles', 'wiredep', 'bower-fonts', 'environment', 'bui
 
 // build styles to tmp
 gulp.task('styles', ['clean'], function () {
+  var autoprefixer_settings = {
+    browsers: ['last 2 versions'], 
+    remove: false
+  };
+
+  if(options.webapp) autoprefixer_settings.browsers = ['iOS > 5', 'Chrome > 30', 'ChromeAndroid > 35', 'last 3 Android versions'];
 
   // compile css starting from each module's scss
   return gulp.src('app/*/styles/!(_)*.scss')
     .pipe($.plumber())
     .pipe($.sourcemaps.init())
     .pipe($.sass.sync().on('error', $.sass.logError))
-    .pipe($.autoprefixer({ browsers: ['last 2 versions'], remove: false}))
+    .pipe($.autoprefixer(autoprefixer_settings))
     .pipe($.sourcemaps.write('.'))
     .pipe(gulp.dest('.tmp/'));
 });
 
 // inject bower components into index.html
-gulp.task('wiredep', function () {
+gulp.task('wiredep', ['copy-index-html'], function () {
+  var wiredep_options = {
+    // exclude ionic scss since we're using ionic sass
+    exclude: ['bower_components/ionic/release/css']
+  }
+  if(options.webapp) {
+    // exclude ionic js
+    wiredep_options.exclude = wiredep_options.exclude.concat(options.bowerExcludesForWeb);
+  }
 
   return gulp.src('app/index.html')
-    // exclude ionic scss since we're using ionic sass
-    .pipe(wiredep.stream({exclude: ['bower_components/ionic/release/css']}))
+    .pipe(wiredep.stream(wiredep_options))
     .pipe(gulp.dest('app/'));
 });
 
@@ -65,6 +78,14 @@ gulp.task('bower-fonts', function () {
     .pipe($.changed(DEST))
     .pipe(gulp.dest(DEST));
 });
+
+gulp.task('copy-index-html', function() {
+  var index = gulp.paths.mobileIndexFile;
+  if(options.webapp) index = gulp.paths.webappIndexFile;
+  return gulp.src('app/' + index)
+    .pipe($.rename("index.html"))
+    .pipe(gulp.dest("app/")); 
+})
 
 /**
  * transforms object into a string format that is ready for injection at indentation 4
