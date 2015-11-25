@@ -7,7 +7,9 @@ var fs = require('fs');
 
 // config
 gulp.paths = {
-  dist: 'www',
+  //dist: 'www',
+  mobileIndexFile: 'mobileapp_index.html',
+  webappIndexFile: 'webapp_index.html',
   jsFiles: ['app/**/*.js', '!app/bower_components/**/*.js'],
   jsonFiles: ['app/**/*.json', '!app/bower_components/**/*.json'],
   templates: ['app/*/templates/**/*'],
@@ -17,6 +19,28 @@ gulp.paths = {
 
 // OPTIONS
 var options = gulp.options = minimist(process.argv.slice(2));
+
+// exclude this bower packages from wiredep for web app
+options.bowerExcludesForWeb = ['ionic/', 'ngCordova/' ];
+options.modules = {
+  webapp_module: 'web',
+  mobileapp_module: 'main'
+}
+
+// gulp task is called with --webapp key?
+if(options.webapp) {
+  // building web app
+  gulp.paths.dist = 'webapp_dist';
+  // exclude main mobile-app module containing all routing etc
+  gulp.paths.jsFiles.push('!app/' + options.modules.mobileapp_module + '/**/*.js')
+  gulp.paths.templates.push('!app/' + options.modules.mobileapp_module + '/templates/*')
+} else {
+  // building cordiva\ionic app
+  gulp.paths.dist = 'www'
+  // exclude main web-app module containing all routing etc
+  gulp.paths.jsFiles.push('!app/' + options.modules.webapp_module + '/**/*.js')
+  gulp.paths.templates.push('!app/' + options.modules.webapp_module + '/templates/*')
+}
 
 // set defaults
 var task = options._[0]; // only for first task
